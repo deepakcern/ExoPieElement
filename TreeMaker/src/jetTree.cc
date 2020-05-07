@@ -49,6 +49,7 @@ jetTree::jetTree(std::string desc, TTree* tree, const edm::ParameterSet& iConfig
   isAK8PuppiJet_(false),
   isCA15PuppiJet_(false),
   useJECText_(iConfig.getParameter<bool>("useJECText")),
+  runOn2018_(iConfig.getParameter<bool>("runOn2018")),
   runOn2017_(iConfig.getParameter<bool>("runOn2017")),
   runOn2016_(iConfig.getParameter<bool>("runOn2016")),
   svTagInfosCstr_(iConfig.getParameter<std::string>("svTagInfosPY")),
@@ -262,9 +263,8 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
 
   for(;jet!=jets.end();jet++){
 
-    if(jet->pt() < 30.) continue;
+    if(jet->pt() < 30. || (!(jet->isPFJet()))) continue;
     if((isFATJet_ || isAK8PuppiJet_ || isCA15PuppiJet_) && jet->pt() < 200.) continue;
-    if (!(jet->isPFJet())) continue;
 
     nJet_++;
     //Stuff common for all jets.
@@ -277,6 +277,14 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
       double b = ( jet->p4().phi() - jet->genJet()->p4().phi()) * ( jet->p4().phi() - jet->genJet()->p4().phi());
       DR = sqrt(a+b);
 
+      /*
+      new( (*genjetP4_)[nJet_-1]) TLorentzVector(
+   						 jet->genJet()->p4().px(),
+   						 jet->genJet()->p4().py(),
+   						 jet->genJet()->p4().pz(),
+   						 jet->genJet()->p4().energy()
+   						 );
+      */
       genjetpx_.push_back(jet->genJet()->p4().px());
       genjetpy_.push_back(jet->genJet()->p4().py());
       genjetpz_.push_back(jet->genJet()->p4().pz());
@@ -410,7 +418,7 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
       //  b  jet regrssion correction
       bRegNNCorr_.push_back(jet->userFloat("bRegNNCorr"));
       bRegNNResolution_.push_back(jet->userFloat("bRegNNResolution"));
-      
+
       isPUJetIDLoose_.push_back(bool(jet->userInt("pileupJetId:fullId") & (1 << 2)));
       isPUJetIDMedium_.push_back(bool(jet->userInt("pileupJetId:fullId") & (1 << 1)));
       isPUJetIDTight_.push_back(bool(jet->userInt("pileupJetId:fullId") & (1 << 0)));
@@ -423,10 +431,14 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
         if (runOn2017_){
             jetPassIDTight_.push_back(bool(jet->userInt("tightJetID_2017")));
         }
+        if (runOn2018_){
+            jetPassIDTight_.push_back(bool(jet->userInt("tightJetID_2018")));
+        }
         jetCEmEF_.push_back(jet->userFloat("CEMF_"));
         jetCHadEF_.push_back(jet->userFloat("CHF_"));
         jetNEmEF_.push_back(jet->userFloat("NEMF_"));
         jetNHadEF_.push_back(jet->userFloat("NHF_"));
+        jetMuoEF_.push_back(jet->userFloat("MUF_"));
         jetCMulti_.push_back(jet->userFloat("CHM_"));
         jetNMultiplicity_.push_back(jet->userFloat("NumNeutralParticles_"));
 
@@ -442,10 +454,16 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
             bool passOrNotT = PassAll(PassT);
             jetPassIDTight_.push_back(passOrNotT);
         }
+        if (runOn2018_){
+            std::map<std::string, bool> PassT = jet2017ID_.TightJetCut_2018(*jet);
+            bool passOrNotT = PassAll(PassT);
+            jetPassIDTight_.push_back(passOrNotT);
+        }
 
         jetCEmEF_.push_back(jet->chargedEmEnergyFraction());
         jetCHadEF_.push_back(jet->chargedHadronEnergyFraction());
         jetNEmEF_.push_back(jet->neutralEmEnergyFraction());
+        jetMuoEF_.push_back(jet->muonEnergyFraction());
         jetNHadEF_.push_back(jet->neutralHadronEnergyFraction());
         jetCMulti_.push_back(jet->chargedMultiplicity());
         jetNMultiplicity_.push_back(jet->neutralMultiplicity());
@@ -454,7 +472,6 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
     jetPhoEF_.push_back(jet->photonEnergyFraction());
     jetEleEF_.push_back(jet->electronEnergyFraction());
     jetChMuEF_.push_back(jet->chargedMuEnergyFraction());
-    jetMuoEF_.push_back(jet->muonEnergyFraction());
     jetHFHadEF_.push_back(jet->HFHadronEnergyFraction());
     jetHFEMEF_.push_back(jet->HFEMEnergyFraction());
     jetHOEnergy_.push_back(jet->hoEnergy());
@@ -677,6 +694,7 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
       jetTau2_.push_back(jet->userFloat("NjettinessAK8Puppi:tau2"));
       jetTau3_.push_back(jet->userFloat("NjettinessAK8Puppi:tau3"));
       jetTau4_.push_back(jet->userFloat("NjettinessAK8Puppi:tau4"));
+      jetSDmass_.push_back(jet->userFloat("ak8PFJetsPuppiSoftDropMass"));
 
       // deep DoubleB tagger
 
@@ -869,7 +887,6 @@ jetTree::Fill(const edm::Event& iEvent, edm::EventSetup const& iSetup){
       if(isFATJet_)
 	//jetSDmass_.push_back(nSubSoftDropjets==0? DUMMY:softdrop_raw_l4.M());
 	jetSDmass_.push_back(jet->userFloat("ak8PFJetsPuppiSoftDropMass"));
-        //std::cout << "ak8PFJetsPuppiSoftDropMass"  << jet->userFloat("ak8PFJetsPuppiSoftDropMass")  << "RawMass" << softdrop_raw_l4.M() << std::endl;
       if(nSubSoftDropjets==0 || genjet_softdrop_l4.E()<1e-6)
 	genjet_softdropmass = DUMMY;
       else
@@ -921,23 +938,22 @@ jetTree::SetBranches(){
   AddBranch(&jetCHadEF_, "jetCHadEF");
   AddBranch(&jetNEmEF_,  "jetNEmEF");
   AddBranch(&jetNHadEF_, "jetNHadEF");
+  AddBranch(&jetMuoEF_,  "jetMuoEF");
   AddBranch(&jetCMulti_, "jetCMulti");
   AddBranch(&jetNMultiplicity_,"jetNMultiplicity");
+  AddBranch(&genjetpx_,"genjetpx");
+  AddBranch(&genjetpy_,"genjetpy");
+  AddBranch(&genjetpz_,"genjetpz");
+  AddBranch(&genjetE_,"genjetE");
 
-
+  if(jet_extra){
     //AddBranch(&jetP4_,       "jetP4");
     //AddBranch(&genjetP4_,   "genjetP4"); // this is no longer needed as individual component is already there,
-    AddBranch(&genjetpx_,"genjetpx");
-    AddBranch(&genjetpy_,"genjetpy");
-    AddBranch(&genjetpz_,"genjetpz");
-    AddBranch(&genjetE_,"genjetE");
-  if(jet_extra){
     AddBranch(&genjetEM_ ,  "genjetEM");
     AddBranch(&genjetHAD_ , "genjetHAD");
     AddBranch(&genjetINV_ , "genjetINV");
     AddBranch(&genjetAUX_ , "genjetAUX");
     AddBranch(&matchedDR_ , "matchedDR");
-
     AddBranch(&jetRawFactor_, "jetRawFactor");
     //AddBranch(&unCorrJetP4_, "unCorrJetP4");
     AddBranch(&unCorrJetPx_, "unCorrJetPx");
@@ -961,14 +977,16 @@ jetTree::SetBranches(){
     AddBranch(&jetNHadMulplicity_,"jetNHadMulplicity");
     AddBranch(&jetPhoEF_,  "jetPhoEF");
     AddBranch(&jetEleEF_,  "jetEleEF");
-    AddBranch(&jetMuoEF_,  "jetMuoEF");
   }
 
   AddBranch(&jetCorrUncUp_,   "jetCorrUncUp");
   AddBranch(&jetCorrUncDown_, "jetCorrUncDown");
   AddBranch(&jetHadronFlavor_, "jetHadronFlavor");
 
-  if (runOn2017_){
+  if (runOn2018_){
+     AddBranch(&jetPassIDTight_,  "jetPassIDTight");
+  }
+  else if (runOn2017_){
      AddBranch(&jetPassIDTight_,  "jetPassIDTight");
   }
   else if (runOn2016_){

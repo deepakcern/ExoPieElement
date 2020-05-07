@@ -41,6 +41,7 @@ class patHltTree : public baseTree{
 
   patHltTree(){};
   void SetBranches();
+  bool runOn2018_;
   bool runOn2017_;
   bool runOn2016_;
   bool saveAllTrigPaths_;

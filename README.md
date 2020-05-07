@@ -1,5 +1,5 @@
 ## this branch is already good for 2017 analysis, 
-
+## add the instruction for 2018
 ## please make all changes for 2016 in the present branch such that this can be used for both years. 
 
 ## make all the new switches configurable via python file, DO NOT MAKE C++ ONLY SWITCHES ANYMORE. 
@@ -113,3 +113,41 @@ python MultiCrab_2017MC.py --resubmit --crabdir=crab_MC_2017miniaodV2_V1
 for crab kill: 
 python MultiCrab_2017MC.py --kill --crabdir=crab_MC_2017miniaodV2_V1
 
+
+
+
+## Instruction for 2018 setup
+
+Working on lxplus7
+
+##SCRAM ARCH SET for CMSSW_10_2_X
+
+export SCRAM_ARCH=slc7_amd64_gcc700
+
+cmsrel CMSSW_10_2_18
+
+cd CMSSW_10_2_18/src/
+
+cmsenv
+
+git cms-init
+
+git cms-merge-topic cms-egamma:EgammaPostRecoTools
+
+git cms-merge-topic cms-met:METFixEE2017_949_v2_backport_to_102X  ##Twiki: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETUncertaintyPrescription
+
+git clone -b setup_2017_2016_2018 git@github.com:ExoPie/ExoPieElement.git
+
+scram b -j 4
+
+git clone git@github.com:cms-jet/JetToolbox.git JMEAnalysis/JetToolbox -b jetToolbox_102X_v2
+
+scram b -j 4
+
+cd ExoPieElement/TreeMaker/test/
+
+## before cmsRun set the proxy
+
+##Then run the test file by
+
+cmsRun treeMaker_2018_cfg.py
