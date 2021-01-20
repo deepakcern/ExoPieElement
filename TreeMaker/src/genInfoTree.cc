@@ -107,9 +107,10 @@ genInfoTree::Fill(const edm::Event& iEvent)
     // get PDF and scale weights
     if(saveLHEWeights_){
       for (unsigned int i=0; i< evt->weights().size(); i++) {
-	float tempMCWeight = genEventInfoHandle->weight() > 0? 1: -1;
-	float sysLHEweight = tempMCWeight* evt->weights()[i].wgt/evt->originalXWGTUP();
-	pdfscaleSysWeights_.push_back( sysLHEweight );
+        float tempMCWeight = genEventInfoHandle->weight() > 0? 1: -1;
+        float sysLHEweight = tempMCWeight* evt->weights()[i].wgt/evt->originalXWGTUP();
+        pdfscaleSysWeights_.push_back( sysLHEweight );
+        pdfscaleSysWgtID_.push_back(evt->weights()[i].id);
       }
     }
 
@@ -333,6 +334,17 @@ genInfoTree::SetBranches(){
   AddBranch(&genParSt_,"genParSt");
   AddBranch(&genMomParId_,"genMomParId");
   AddBranch(&mcWeight_, "mcWeight");
+  AddBranch(&originalLHEweight_, "originalLHEweight");
+  AddBranch(&pdfscaleSysWgtID_, "pdfscaleSysWgtID_");
+  AddBranch(&pdfscaleSysWeights_, "pdfscaleSysWeights");
+
+    AddBranch(&ak4nGenJet_,  "ak4nGenJet");
+    //AddBranch(&ak4GenJetP4_, "ak4GenJetP4");
+    AddBranch(&ak4GenJetPx_, "ak4GenJetPx");
+    AddBranch(&ak4GenJetPy_, "ak4GenJetPy");
+    AddBranch(&ak4GenJetPz_, "ak4GenJetPz");
+    AddBranch(&ak4GenJetE_, "ak4GenJetE");
+    
 
   if (gen_extra){
     AddBranch(&genParIndex_,"genParIndex");
@@ -343,9 +355,7 @@ genInfoTree::SetBranches(){
     AddBranch(&ptHat_, "ptHat");
     AddBranch(&HT_, "HT");
     AddBranch(&pdf_, "pdf");
-    AddBranch(&originalLHEweight_, "originalLHEweight");
-    AddBranch(&pdfscaleSysWeights_, "pdfscaleSysWeights");
-
+    
     AddBranch(&genNMo_,"genNMo");
     AddBranch(&genNDa_,"genNDa");
     AddBranch(&genMo1_,"genMo1");
@@ -353,13 +363,6 @@ genInfoTree::SetBranches(){
     AddBranch(&genDa1_,"genDa1");
     AddBranch(&genDa2_,"genDa2");
     AddBranch(&genStFlag_,"genStFlag");
-
-    AddBranch(&ak4nGenJet_,  "ak4nGenJet");
-    //AddBranch(&ak4GenJetP4_, "ak4GenJetP4");
-    AddBranch(&ak4GenJetPx_, "ak4GenJetPx");
-    AddBranch(&ak4GenJetPy_, "ak4GenJetPy");
-    AddBranch(&ak4GenJetPz_, "ak4GenJetPz");
-    AddBranch(&ak4GenJetE_, "ak4GenJetE");
 
     AddBranch(&ak8nGenJet_,  "ak8nGenJet");
     //AddBranch(&ak8GenJetP4_, "ak8GenJetP4");
@@ -384,6 +387,7 @@ genInfoTree::Clear(){
   pdf_.clear();
   originalLHEweight_ = 1;
   pdfscaleSysWeights_.clear();
+  pdfscaleSysWgtID_.clear();
   nGenPar_ =0;
   //genParP4_->Clear();
   genParPx_.clear();

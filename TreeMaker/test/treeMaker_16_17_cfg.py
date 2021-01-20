@@ -78,7 +78,7 @@ elif options.runOn2016:
 
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(100)
+    input = cms.untracked.int32(10)
 )
 
 ## New from Egamma
