@@ -43,7 +43,7 @@ tree = cms.EDAnalyzer(
     applyStatusSelection = cms.bool(True),
     applyPromptSelection = cms.bool(False),
     saveLHEWeights       = cms.bool(True),
-    saveGenJets          = cms.bool(False),
+    saveGenJets          = cms.bool(True),
 ##### when applyPromptSelection is True
 #    maxNumGenPar  =  cms.uint32(60),
 

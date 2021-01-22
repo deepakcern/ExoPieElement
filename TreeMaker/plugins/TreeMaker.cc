@@ -114,7 +114,7 @@ TreeMaker::TreeMaker(const edm::ParameterSet& iConfig)
       genInfoTree_->genMETToken_true         = consumes<pat::PackedGenParticleCollection>(iConfig.getParameter<edm::InputTag>("genParticles"));
       genInfoTree_->genMETToken_calo         = consumes<reco::GenMETCollection>(edm::InputTag("genMetCalo"));
       genInfoTree_->genMETToken_caloNonPrompt = consumes<reco::GenMETCollection>(edm::InputTag("genMetCaloAndNonPrompt"));
-      genInfoTree_->ak4genJetsToken           = consumes<reco::GenJetCollection>(edm::InputTag("ak4GenJetsNoNu"));//"ak4GenJets"));
+      genInfoTree_->ak4genJetsToken           = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetLabel"));//(edm::InputTag("ak4GenJetsNoNu"));//"ak4GenJets"));
       genInfoTree_->ak8genJetsToken           = consumes<reco::GenJetCollection>(edm::InputTag("ak8GenJets"));
   }
 
